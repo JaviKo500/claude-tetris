@@ -23,7 +23,7 @@ Three files — no dependencies, no bundler, no framework:
 
 ### game.js internals
 
-**State**: a handful of module-level `let` variables — `board` (2D array `ROWS×COLS`, values 0 or piece color index 1–7), `current`/`next` (piece objects with `{type, shape, x, y}`), plus `score`, `lines`, `level`, `paused`, `gameOver`, `dropAccum`, `dropInterval`, `animId`, `lastTime`.
+**State**: a handful of module-level `let` variables — `board` (2D array `ROWS×COLS`, values 0 or piece color index 1–8), `current`/`next` (piece objects with `{type, shape, x, y}`), plus `score`, `lines`, `level`, `paused`, `gameOver`, `dropAccum`, `dropInterval`, `animId`, `lastTime`.
 
 **Key functions and their roles:**
 - `collide(shape, ox, oy)` — bounds + overlap check against the frozen board
@@ -46,5 +46,6 @@ Three files — no dependencies, no bundler, no framework:
 |---|---|---|
 | `COLS` / `ROWS` | 10 / 20 | If changed, update canvas `width`/`height` in `index.html` (`COLS×BLOCK` / `ROWS×BLOCK`) |
 | `BLOCK` | 30 | Pixel size per cell |
-| `COLORS` | 7-color array | Index-matched to `PIECES` (index 0 is unused/null) |
+| `COLORS` | 8-color array | Index-matched to `PIECES` (index 0 is unused/null); index 8 = tuerca (plata claro) |
 | `LINE_SCORES` | `[0,100,300,500,800]` | Points for 1–4 simultaneous line clears |
+| `NUT_PROBABILITY` | `0.12` | Probability (0–1) that any given piece is the "tuerca" (nut) challenge piece |
