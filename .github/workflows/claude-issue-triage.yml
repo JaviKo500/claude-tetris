@@ -1,0 +1,70 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write   # necesario para aplicar labels y publicar comentarios
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Issue Triage
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: '--allowedTools "Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Bash(gh label list:*)"'
+          prompt: |
+            Eres un asistente de triage para el repositorio ${{ github.repository }}.
+            Analiza la issue #${{ github.event.issue.number }} y responde SIEMPRE en español.
+
+            Sigue estos pasos en orden:
+
+            1. Lee la issue completa ejecutando:
+               gh issue view ${{ github.event.issue.number }}
+
+            2. Lista los labels disponibles en el repositorio ejecutando:
+               gh label list
+
+            3. Asigna ÚNICAMENTE los labels que ya existen en el repositorio y que correspondan
+               al tipo de la issue. NO inventes ni crees labels nuevos. Usa:
+               gh issue edit ${{ github.event.issue.number }} --add-label "<label>"
+
+            4. Revisa si la issue ya tiene un comentario que empiece con "🤖 Diagnóstico automático".
+               - Si la issue acaba de crearse (evento: opened) o no existe ese comentario → crea uno nuevo.
+               - Si la issue fue editada y el comentario ya existe → añade un nuevo comentario indicando
+                 que es una actualización del diagnóstico, para no confundir con el anterior.
+
+            5. Publica el diagnóstico con:
+               gh issue comment ${{ github.event.issue.number }} --body "<contenido>"
+
+               El comentario debe seguir exactamente esta estructura:
+
+               ## 🤖 Diagnóstico automático
+
+               ### Resumen
+               <descripción concisa del problema o solicitud reportada>
+
+               ### Causa raíz / Áreas afectadas
+               <indica qué parte del código está involucrada según la arquitectura del proyecto:
+               - game.js (~305 líneas): lógica del juego (colisión, rotación, gravedad, puntuación, etc.)
+               - index.html: estructura DOM, canvas principal (300×600) y canvas de preview (120×120)
+               - style.css: estilos, overlay de pausa/game over>
+
+               ### Pasos sugeridos para la solución
+               <lista numerada de los cambios o investigaciones recomendadas>
+
+               ### Labels asignados
+               <lista los labels aplicados y una línea explicando por qué cada uno aplica>
+
+               ---
+               *Análisis generado automáticamente por Claude Code Action*
