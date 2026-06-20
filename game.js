@@ -169,7 +169,7 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--canvas-grid').trim();
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -300,5 +300,27 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+// ─── Theme toggle ────────────────────────────────────────────────────────────
+// Adds or removes the .light-mode class on <body> based on the checkbox state.
+// All colour changes are handled by CSS custom properties in style.css —
+// no colour values are duplicated here. drawGrid() above reads --canvas-grid
+// on every frame so the grid colour updates instantly when the theme changes.
+// The chosen theme is saved to localStorage so it persists across sessions.
+
+const themeCheckbox = document.getElementById('theme-toggle');
+const themeModeText = document.getElementById('theme-mode-text');
+
+function applyTheme(isLight) {
+  document.body.classList.toggle('light-mode', isLight);
+  themeCheckbox.checked = isLight;
+  themeModeText.textContent = isLight ? 'Claro' : 'Oscuro';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+themeCheckbox.addEventListener('change', () => applyTheme(themeCheckbox.checked));
+
+// Restore last saved preference on page load (defaults to dark)
+applyTheme(localStorage.getItem('theme') === 'light');
 
 init();
