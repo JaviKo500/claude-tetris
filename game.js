@@ -14,6 +14,7 @@ const COLORS = [
   '#5B8DD9', // J - pale blue
   '#ffb74d', // L - orange
   '#cfd8dc', // Nut - plata claro (tuerca, reto)
+  '#ef5350', // Bomb - rojo (bomba, destruye 3×3)
 ];
 
 const PIECES = [
@@ -26,10 +27,12 @@ const PIECES = [
   [[6,0,0],[6,6,6],[0,0,0]],                  // J
   [[0,0,7],[7,7,7],[0,0,0]],                  // L
   [[8,8,8],[8,0,8],[8,8,8]],                  // Nut (tuerca, reto — hueco central sellado)
+  [[9]],                                       // Bomb (bomba — celda única, destruye 3×3)
 ];
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
-const NUT_PROBABILITY = 0.12; // ~12 % de las piezas es la tuerca (reto)
+const NUT_PROBABILITY   = 0.12; // ~12 % de las piezas es la tuerca (reto)
+const BOMB_LINES_INTERVAL = 1; // cada cuántas líneas eliminadas aparece la bomba
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -43,16 +46,22 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
 }
 
 function randomPiece() {
-  const type = Math.random() < NUT_PROBABILITY
-    ? 8
-    : Math.floor(Math.random() * 7) + 1;
+  let type;
+  if (bombPending) {
+    bombPending = false;
+    type = 9;
+  } else {
+    type = Math.random() < NUT_PROBABILITY
+      ? 8
+      : Math.floor(Math.random() * 7) + 1;
+  }
   const shape = PIECES[type].map(row => [...row]);
   return { type, shape, x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2), y: 0 };
 }
@@ -109,10 +118,14 @@ function clearLines() {
     }
   }
   if (cleared) {
+    const prevLines = lines;
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
     level = Math.floor(lines / 10) + 1;
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+    if (Math.floor(prevLines / BOMB_LINES_INTERVAL) !== Math.floor(lines / BOMB_LINES_INTERVAL)) {
+      bombPending = true;
+    }
     updateHUD();
   }
 }
@@ -140,8 +153,17 @@ function softDrop() {
   }
 }
 
+function explodeBomb() {
+  const cx = current.x, cy = current.y; // celda única, shape [[9]]
+  for (let r = cy - 1; r <= cy + 1; r++)
+    for (let c = cx - 1; c <= cx + 1; c++)
+      if (r >= 0 && r < ROWS && c >= 0 && c < COLS)
+        board[r][c] = 0;
+}
+
 function lockPiece() {
-  merge();
+  if (current.type === 9) explodeBomb();
+  else merge();
   clearLines();
   spawn();
 }
@@ -270,6 +292,7 @@ function init() {
   level = 1;
   paused = false;
   gameOver = false;
+  bombPending = false;
   dropInterval = 1000;
   dropAccum = 0;
   lastTime = performance.now();

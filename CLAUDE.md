@@ -23,14 +23,15 @@ Three files — no dependencies, no bundler, no framework:
 
 ### game.js internals
 
-**State**: a handful of module-level `let` variables — `board` (2D array `ROWS×COLS`, values 0 or piece color index 1–8), `current`/`next` (piece objects with `{type, shape, x, y}`), plus `score`, `lines`, `level`, `paused`, `gameOver`, `dropAccum`, `dropInterval`, `animId`, `lastTime`.
+**State**: a handful of module-level `let` variables — `board` (2D array `ROWS×COLS`, values 0 or piece color index 1–9), `current`/`next` (piece objects with `{type, shape, x, y}`), plus `score`, `lines`, `level`, `paused`, `gameOver`, `dropAccum`, `dropInterval`, `animId`, `lastTime`, `bombPending`.
 
 **Key functions and their roles:**
 - `collide(shape, ox, oy)` — bounds + overlap check against the frozen board
 - `rotateCW(shape)` — transpose + reverse rows; returns a new matrix
 - `tryRotate()` — applies `rotateCW` with wall-kick offsets `[0, -1, 1, -2, 2]`
-- `lockPiece()` — calls `merge()` → `clearLines()` → `spawn()`
-- `clearLines()` — iterates bottom-up, splices full rows and unshifts empty ones
+- `lockPiece()` — if bomb (`type 9`) calls `explodeBomb()`, otherwise `merge()`; then `clearLines()` → `spawn()`
+- `explodeBomb()` — clears the 3×3 area of the board centered on the bomb's cell
+- `clearLines()` — iterates bottom-up, splices full rows and unshifts empty ones; sets `bombPending` when `lines` crosses a multiple of `BOMB_LINES_INTERVAL`
 - `ghostY()` — drops a probe until `collide` triggers, returns the Y position
 - `loop(ts)` — `requestAnimationFrame` loop; accumulates `dropAccum`, locks piece when gravity fires
 - `draw()` — clears canvas, draws grid lines, frozen board, ghost (alpha 0.2), then current piece
@@ -46,6 +47,7 @@ Three files — no dependencies, no bundler, no framework:
 |---|---|---|
 | `COLS` / `ROWS` | 10 / 20 | If changed, update canvas `width`/`height` in `index.html` (`COLS×BLOCK` / `ROWS×BLOCK`) |
 | `BLOCK` | 30 | Pixel size per cell |
-| `COLORS` | 8-color array | Index-matched to `PIECES` (index 0 is unused/null); index 8 = tuerca (plata claro) |
+| `COLORS` | 9-color array | Index-matched to `PIECES` (index 0 is unused/null); index 8 = tuerca (plata claro); index 9 = bomba (rojo) |
 | `LINE_SCORES` | `[0,100,300,500,800]` | Points for 1–4 simultaneous line clears |
 | `NUT_PROBABILITY` | `0.12` | Probability (0–1) that any given piece is the "tuerca" (nut) challenge piece |
+| `BOMB_LINES_INTERVAL` | `15` | Every N lines cleared, the next piece is guaranteed to be a bomb (destroys a 3×3 area) |
