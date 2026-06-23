@@ -10,6 +10,26 @@
   <div class="wrapper">
     <h1 class="game-title">TETRIS</h1>
     <div class="game-container">
+      <!-- Records panel — columna izquierda -->
+      <div class="records-panel">
+        <div class="records-header">
+          <span class="label">RECORDS</span>
+          <button id="reset-records-btn" class="reset-btn">Borrar</button>
+        </div>
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Pts</th>
+              <th>L</th>
+              <th>C</th>
+            </tr>
+          </thead>
+          <tbody id="main-records-body"></tbody>
+        </table>
+      </div>
+
       <canvas id="board" width="300" height="600"></canvas>
 
       <aside class="panel">
@@ -69,6 +89,32 @@
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
+
+        <!-- Sección de nombre — se muestra solo cuando el score entra en el top 5 -->
+        <div id="name-section" class="name-section hidden">
+          <p class="name-prompt">¡Top 5! Introduce tu nombre</p>
+          <div class="name-input-row">
+            <input type="text" id="player-name" class="name-input" maxlength="12" placeholder="Tu nombre" />
+            <button id="save-record-btn" class="save-btn">Guardar</button>
+          </div>
+        </div>
+
+        <!-- Tabla de records en el overlay de game over -->
+        <div id="overlay-records" class="overlay-records hidden">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Puntos</th>
+                <th>Líneas</th>
+                <th>Combo</th>
+              </tr>
+            </thead>
+            <tbody id="overlay-records-body"></tbody>
+          </table>
+        </div>
+
         <button id="restart-btn">Reiniciar</button>
       </div>
     </div>

@@ -90,6 +90,9 @@ const LINE_SCORES = [0, 100, 300, 500, 800];
 const NUT_PROBABILITY   = 0.12; // ~12 % de las piezas es la tuerca (reto)
 const BOMB_LINES_INTERVAL = 1; // cada cuántas líneas eliminadas aparece la bomba
 
+const RECORDS_KEY = 'tetris-records';
+const MAX_RECORDS = 5;
+
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next-canvas');
@@ -101,9 +104,17 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
+const nameSection = document.getElementById('name-section');
+const playerNameInput = document.getElementById('player-name');
+const saveRecordBtn = document.getElementById('save-record-btn');
+const overlayRecords = document.getElementById('overlay-records');
+const overlayRecordsBody = document.getElementById('overlay-records-body');
+const mainRecordsBody = document.getElementById('main-records-body');
+const resetRecordsBtn = document.getElementById('reset-records-btn');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending;
 let currentSkin = SKINS.retro;
+let combo, maxCombo;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -185,6 +196,7 @@ function clearLines() {
     }
     updateHUD();
   }
+  return cleared;
 }
 
 function ghostY() {
@@ -221,7 +233,13 @@ function explodeBomb() {
 function lockPiece() {
   if (current.type === 9) explodeBomb();
   else merge();
-  clearLines();
+  const cleared = clearLines();
+  if (cleared > 0) {
+    combo++;
+    if (combo > maxCombo) maxCombo = combo;
+  } else {
+    combo = 0;
+  }
   spawn();
 }
 
@@ -296,11 +314,76 @@ function drawNext() {
       drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB);
 }
 
+// ─── Records ─────────────────────────────────────────────────────────────────
+
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem(RECORDS_KEY)) || []; }
+  catch { return []; }
+}
+
+function isTopScore(s) {
+  const records = loadRecords();
+  return records.length < MAX_RECORDS || s > records[records.length - 1].score;
+}
+
+function saveRecord(name) {
+  const records = loadRecords();
+  const entry = { name: name.trim() || 'Anónimo', score, lines, maxCombo };
+  records.push(entry);
+  records.sort((a, b) => b.score - a.score);
+  const idx = records.indexOf(entry);
+  records.splice(MAX_RECORDS);
+  localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+  return idx < MAX_RECORDS ? idx : -1;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function buildRecordsRows(tbody, records, highlightIdx) {
+  tbody.innerHTML = '';
+  if (!records.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="no-records">Sin records aún</td></tr>';
+    return;
+  }
+  records.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    if (i === highlightIdx) tr.classList.add('record-new');
+    tr.innerHTML =
+      `<td class="record-rank">${i + 1}</td>` +
+      `<td>${escapeHtml(r.name)}</td>` +
+      `<td class="record-score">${r.score.toLocaleString()}</td>` +
+      `<td>${r.lines}</td>` +
+      `<td>${r.maxCombo}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderMainRecords() {
+  buildRecordsRows(mainRecordsBody, loadRecords(), -1);
+}
+
+// ─── Game lifecycle ───────────────────────────────────────────────────────────
+
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
   overlayTitle.textContent = 'GAME OVER';
-  overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
+  overlayScore.textContent =
+    `Puntos: ${score.toLocaleString()} · Líneas: ${lines} · Combo: ×${maxCombo}`;
+
+  if (isTopScore(score)) {
+    nameSection.classList.remove('hidden');
+    overlayRecords.classList.add('hidden');
+    playerNameInput.value = '';
+    setTimeout(() => playerNameInput.focus(), 50);
+  } else {
+    nameSection.classList.add('hidden');
+    buildRecordsRows(overlayRecordsBody, loadRecords(), -1);
+    overlayRecords.classList.remove('hidden');
+  }
+
   overlay.classList.remove('hidden');
 }
 
@@ -340,6 +423,8 @@ function init() {
   score = 0;
   lines = 0;
   level = 1;
+  combo = 0;
+  maxCombo = 0;
   paused = false;
   gameOver = false;
   bombPending = false;
@@ -349,10 +434,32 @@ function init() {
   next = randomPiece();
   spawn();
   updateHUD();
+  nameSection.classList.add('hidden');
+  overlayRecords.classList.add('hidden');
   overlay.classList.add('hidden');
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
 }
+
+// ─── Event listeners ──────────────────────────────────────────────────────────
+
+function handleSaveRecord() {
+  const idx = saveRecord(playerNameInput.value);
+  renderMainRecords();
+  buildRecordsRows(overlayRecordsBody, loadRecords(), idx);
+  nameSection.classList.add('hidden');
+  overlayRecords.classList.remove('hidden');
+}
+
+saveRecordBtn.addEventListener('click', handleSaveRecord);
+playerNameInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSaveRecord();
+});
+
+resetRecordsBtn.addEventListener('click', () => {
+  localStorage.removeItem(RECORDS_KEY);
+  renderMainRecords();
+});
 
 document.addEventListener('keydown', e => {
   if (e.code === 'KeyP') { togglePause(); return; }
@@ -400,11 +507,6 @@ document.getElementById('skin-picker').addEventListener('click', e => {
 });
 
 // ─── Theme toggle ────────────────────────────────────────────────────────────
-// Adds or removes the .light-mode class on <body> based on the checkbox state.
-// All colour changes are handled by CSS custom properties in style.css —
-// no colour values are duplicated here. drawGrid() above reads --canvas-grid
-// on every frame so the grid colour updates instantly when the theme changes.
-// The chosen theme is saved to localStorage so it persists across sessions.
 
 const themeCheckbox = document.getElementById('theme-toggle');
 const themeModeText = document.getElementById('theme-mode-text');
@@ -417,9 +519,10 @@ function applyTheme(isLight) {
 }
 
 themeCheckbox.addEventListener('change', () => applyTheme(themeCheckbox.checked));
-
-// Restore last saved preference on page load (defaults to dark)
 applyTheme(localStorage.getItem('theme') === 'light');
 applySkin(localStorage.getItem('skin') || 'retro');
 
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+
+renderMainRecords();
 init();

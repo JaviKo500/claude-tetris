@@ -437,3 +437,169 @@ body.skin-pixel {
   --toggle-track: #444400;
   --toggle-thumb: #f8f800;
 }
+
+/* ─── Records panel (columna izquierda del tablero) ──────────────────────── */
+.records-panel {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.records-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reset-btn {
+  background: transparent;
+  border: 1px solid var(--canvas-border);
+  color: var(--text-controls);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.reset-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ─── Tabla de records (compartida por panel y overlay) ───────────────────── */
+.records-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+}
+
+.records-table th {
+  color: var(--text-label);
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 3px 4px;
+  text-align: left;
+  border-bottom: 1px solid var(--canvas-border);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.records-table td {
+  padding: 5px 4px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--canvas-border);
+  transition: color 0.25s;
+}
+
+.records-table .record-rank {
+  color: var(--text-label);
+  width: 20px;
+}
+
+.records-table .record-score {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.records-table tr.record-new td {
+  background: rgba(122, 162, 247, 0.1);
+  color: var(--color-accent);
+}
+
+.records-table tr.record-new .record-rank {
+  color: var(--color-accent);
+}
+
+.no-records {
+  text-align: center;
+  color: var(--text-label);
+  font-family: system-ui, sans-serif;
+  padding: 16px 0;
+  font-size: 12px;
+}
+
+/* ─── Tabla en el overlay de game over ───────────────────────────────────── */
+.overlay-records {
+  width: 360px;
+  max-width: 90vw;
+}
+
+.overlay-records .records-table th,
+.overlay-records .records-table td {
+  font-size: 11px;
+  padding: 5px 6px;
+}
+
+.overlay-records.hidden {
+  display: none;
+}
+
+/* ─── Sección de nombre al conseguir top 5 ───────────────────────────────── */
+.name-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.name-section.hidden {
+  display: none;
+}
+
+.name-prompt {
+  font-size: 13px;
+  color: var(--color-accent);
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.name-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.name-input {
+  background: var(--canvas-bg);
+  border: 1px solid var(--canvas-border);
+  color: var(--text-primary);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
+  width: 160px;
+  outline: none;
+  transition: border-color 0.15s, background 0.25s, color 0.25s;
+}
+
+.name-input:focus {
+  border-color: var(--color-accent);
+}
+
+.name-input::placeholder {
+  color: var(--text-label);
+}
+
+.save-btn {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.save-btn:hover {
+  background: var(--btn-bg-hover);
+}
