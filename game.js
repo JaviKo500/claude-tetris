@@ -34,6 +34,9 @@ const LINE_SCORES = [0, 100, 300, 500, 800];
 const NUT_PROBABILITY   = 0.12; // ~12 % de las piezas es la tuerca (reto)
 const BOMB_LINES_INTERVAL = 1; // cada cuántas líneas eliminadas aparece la bomba
 
+const LEADERBOARD_KEY = 'tetris_records';
+const MAX_RECORDS = 5;
+
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next-canvas');
@@ -45,8 +48,84 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
+const saveScoreBtn = document.getElementById('save-score-btn');
+const resetRecordsBtn = document.getElementById('reset-records-btn');
+const playerNameInput = document.getElementById('player-name');
+const gameoverContent = document.getElementById('gameover-content');
+const nameEntry = document.getElementById('name-entry');
+const newRecordMsg = document.getElementById('new-record-msg');
+const leaderboardBody = document.getElementById('leaderboard-body');
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending;
+let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending, comboStreak, maxCombo;
+
+// ─── Leaderboard ──────────────────────────────────────────────────────────────
+
+function loadRecords() {
+  try {
+    return JSON.parse(localStorage.getItem(LEADERBOARD_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function isNewHighScore() {
+  const records = loadRecords();
+  return records.length < MAX_RECORDS || score > records[records.length - 1].score;
+}
+
+function saveRecord(name) {
+  const records = loadRecords();
+  const trimmedName = (name || '').trim() || 'Anónimo';
+  const entry = { name: trimmedName, score, lines, maxCombo };
+  records.push(entry);
+  records.sort((a, b) => b.score - a.score);
+  if (records.length > MAX_RECORDS) records.splice(MAX_RECORDS);
+  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(records));
+  return records.indexOf(entry);
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function renderLeaderboard(tbody, highlightIndex = -1) {
+  const records = loadRecords();
+  tbody.innerHTML = '';
+  if (records.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td colspan="5" class="no-records-cell">Sin records aún</td>';
+    tbody.appendChild(tr);
+    return;
+  }
+  records.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    if (i === highlightIndex) tr.classList.add('record-highlight');
+    tr.innerHTML = `<td>${i + 1}</td><td class="td-name">${escapeHtml(r.name)}</td><td>${r.score.toLocaleString()}</td><td>${r.lines}</td><td>×${r.maxCombo}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderPanelLeaderboard() {
+  const container = document.getElementById('panel-records');
+  if (!container) return;
+  const records = loadRecords();
+  container.innerHTML = '';
+  if (records.length === 0) {
+    const p = document.createElement('p');
+    p.className = 'no-records';
+    p.textContent = 'Sin records';
+    container.appendChild(p);
+    return;
+  }
+  records.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'panel-record-row';
+    div.innerHTML = `<span class="pr-rank">${i + 1}.</span><span class="pr-name">${escapeHtml(r.name)}</span><span class="pr-score">${r.score.toLocaleString()}</span>`;
+    container.appendChild(div);
+  });
+}
+
+// ─── Board & pieces ────────────────────────────────────────────────────────────
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -118,6 +197,8 @@ function clearLines() {
     }
   }
   if (cleared) {
+    comboStreak++;
+    if (comboStreak > maxCombo) maxCombo = comboStreak;
     const prevLines = lines;
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
@@ -127,6 +208,8 @@ function clearLines() {
       bombPending = true;
     }
     updateHUD();
+  } else {
+    comboStreak = 0;
   }
 }
 
@@ -183,6 +266,8 @@ function updateHUD() {
   linesEl.textContent = lines;
   levelEl.textContent = level;
 }
+
+// ─── Drawing ───────────────────────────────────────────────────────────────────
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
@@ -246,11 +331,26 @@ function drawNext() {
       drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB);
 }
 
+// ─── Game state ────────────────────────────────────────────────────────────────
+
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
   overlayTitle.textContent = 'GAME OVER';
-  overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
+  overlayScore.textContent = `Puntuación: ${score.toLocaleString()} · Líneas: ${lines} · Combo: ×${maxCombo}`;
+
+  gameoverContent.classList.remove('hidden');
+
+  if (isNewHighScore()) {
+    nameEntry.classList.remove('hidden');
+    newRecordMsg.textContent = '¡Nuevo record! Ingresa tu nombre:';
+    playerNameInput.value = '';
+    setTimeout(() => playerNameInput.focus(), 50);
+  } else {
+    nameEntry.classList.add('hidden');
+  }
+
+  renderLeaderboard(leaderboardBody);
   overlay.classList.remove('hidden');
 }
 
@@ -264,6 +364,7 @@ function togglePause() {
     cancelAnimationFrame(animId);
     overlayTitle.textContent = 'PAUSA';
     overlayScore.textContent = '';
+    gameoverContent.classList.add('hidden');
     overlay.classList.remove('hidden');
   }
 }
@@ -295,6 +396,8 @@ function init() {
   bombPending = false;
   dropInterval = 1000;
   dropAccum = 0;
+  comboStreak = 0;
+  maxCombo = 0;
   lastTime = performance.now();
   next = randomPiece();
   spawn();
@@ -303,6 +406,8 @@ function init() {
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
 }
+
+// ─── Input ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
   if (e.code === 'KeyP') { togglePause(); return; }
@@ -331,6 +436,25 @@ document.addEventListener('keydown', e => {
 
 restartBtn.addEventListener('click', init);
 
+saveScoreBtn.addEventListener('click', () => {
+  const newIndex = saveRecord(playerNameInput.value);
+  nameEntry.classList.add('hidden');
+  renderLeaderboard(leaderboardBody, newIndex);
+  renderPanelLeaderboard();
+});
+
+playerNameInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveScoreBtn.click();
+});
+
+resetRecordsBtn.addEventListener('click', () => {
+  if (confirm('¿Borrar todos los records?')) {
+    localStorage.removeItem(LEADERBOARD_KEY);
+    renderLeaderboard(leaderboardBody);
+    renderPanelLeaderboard();
+  }
+});
+
 // ─── Theme toggle ────────────────────────────────────────────────────────────
 // Adds or removes the .light-mode class on <body> based on the checkbox state.
 // All colour changes are handled by CSS custom properties in style.css —
@@ -353,4 +477,5 @@ themeCheckbox.addEventListener('change', () => applyTheme(themeCheckbox.checked)
 // Restore last saved preference on page load (defaults to dark)
 applyTheme(localStorage.getItem('theme') === 'light');
 
+renderPanelLeaderboard();
 init();
