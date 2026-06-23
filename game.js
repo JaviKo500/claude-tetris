@@ -4,18 +4,15 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
-  null,
-  '#4dd0e1', // I - cyan
-  '#ffd54f', // O - yellow
-  '#ba68c8', // T - purple
-  '#81c784', // S - green
-  '#e57373', // Z - red
-  '#5B8DD9', // J - pale blue
-  '#ffb74d', // L - orange
-  '#cfd8dc', // Nut - plata claro (tuerca, reto)
-  '#ef5350', // Bomb - rojo (bomba, destruye 3×3)
-];
+const SKIN_COLORS = {
+  retro: [null, '#4dd0e1', '#ffd54f', '#ba68c8', '#81c784', '#e57373', '#5B8DD9', '#ffb74d', '#cfd8dc', '#ef5350'],
+  neon:  [null, '#00ffff', '#ffff00', '#ff00ff', '#39ff14', '#ff0055', '#0088ff', '#ff6600', '#bbbbbb', '#ff2200'],
+  pastel:[null, '#a8dde9', '#f9e4a4', '#d4b0e2', '#b8e5bb', '#f5b0b0', '#a8c0e8', '#f8d0a0', '#dde8ec', '#f5a0a0'],
+  pixel: [null, '#44aacc', '#ddbb44', '#9944aa', '#55aa55', '#cc5544', '#4466cc', '#ee9933', '#aabbcc', '#dd3333'],
+};
+
+let activeSkin = 'retro';
+let activeColors = SKIN_COLORS.retro;
 
 const PIECES = [
   null,
@@ -55,8 +52,14 @@ const gameoverContent = document.getElementById('gameover-content');
 const nameEntry = document.getElementById('name-entry');
 const newRecordMsg = document.getElementById('new-record-msg');
 const leaderboardBody = document.getElementById('leaderboard-body');
+const pauseOverlay = document.getElementById('pause-overlay');
+const resumeBtn = document.getElementById('resume-btn');
+const pauseRestartBtn = document.getElementById('pause-restart-btn');
+const controlsToggleBtn = document.getElementById('controls-toggle-btn');
+const controlsPanel = document.getElementById('controls-panel');
+const startLevelSelect = document.getElementById('start-level-select');
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending, comboStreak, maxCombo;
+let board, current, next, score, lines, level, startLevel, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending, comboStreak, maxCombo;
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 
@@ -202,7 +205,7 @@ function clearLines() {
     const prevLines = lines;
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
-    level = Math.floor(lines / 10) + 1;
+    level = startLevel + Math.floor(lines / 10);
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
     if (Math.floor(prevLines / BOMB_LINES_INTERVAL) !== Math.floor(lines / BOMB_LINES_INTERVAL)) {
       bombPending = true;
@@ -237,7 +240,7 @@ function softDrop() {
 }
 
 function explodeBomb() {
-  const cx = current.x, cy = current.y; // celda única, shape [[9]]
+  const cx = current.x, cy = current.y;
   for (let r = cy - 1; r <= cy + 1; r++)
     for (let c = cx - 1; c <= cx + 1; c++)
       if (r >= 0 && r < ROWS && c >= 0 && c < COLS)
@@ -271,13 +274,53 @@ function updateHUD() {
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const color = activeColors[colorIndex];
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+  const px = x * size + 1;
+  const py = y * size + 1;
+  const sz = size - 2;
+
+  if (activeSkin === 'neon') {
+    context.fillStyle = 'rgba(0,0,10,0.9)';
+    context.fillRect(px, py, sz, sz);
+    context.shadowColor = color;
+    context.shadowBlur = 10;
+    context.strokeStyle = color;
+    context.lineWidth = 2;
+    context.strokeRect(px + 1, py + 1, sz - 2, sz - 2);
+    context.fillStyle = color + '28';
+    context.fillRect(px + 2, py + 2, sz - 4, sz - 4);
+    context.shadowBlur = 0;
+  } else if (activeSkin === 'pastel') {
+    const r = 5;
+    context.fillStyle = color;
+    context.beginPath();
+    context.roundRect(px, py, sz, sz, r);
+    context.fill();
+    context.fillStyle = 'rgba(255,255,255,0.35)';
+    context.beginPath();
+    context.roundRect(px, py, sz, sz * 0.4, [r, r, 2, 2]);
+    context.fill();
+  } else if (activeSkin === 'pixel') {
+    context.fillStyle = color;
+    context.fillRect(px, py, sz, sz);
+    context.fillStyle = 'rgba(255,255,255,0.4)';
+    context.fillRect(px, py, sz, 3);
+    context.fillRect(px, py, 3, sz);
+    context.fillStyle = 'rgba(0,0,0,0.4)';
+    context.fillRect(px, py + sz - 3, sz, 3);
+    context.fillRect(px + sz - 3, py, 3, sz);
+    const g = Math.floor(sz / 3);
+    context.fillStyle = 'rgba(0,0,0,0.2)';
+    for (let gx = g; gx < sz; gx += g) context.fillRect(px + gx, py, 1, sz);
+    for (let gy = g; gy < sz; gy += g) context.fillRect(px, py + gy, sz, 1);
+  } else {
+    context.fillStyle = color;
+    context.fillRect(px, py, sz, sz);
+    context.fillStyle = 'rgba(255,255,255,0.12)';
+    context.fillRect(px, py, sz, 4);
+  }
+
   context.globalAlpha = 1;
 }
 
@@ -302,19 +345,16 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawGrid();
 
-  // board
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
       drawBlock(ctx, c, r, board[r][c], BLOCK);
 
-  // ghost
   const gy = ghostY();
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
       if (current.shape[r][c])
         drawBlock(ctx, current.x + c, gy + r, current.shape[r][c], BLOCK, 0.2);
 
-  // current piece
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
       drawBlock(ctx, current.x + c, current.y + r, current.shape[r][c], BLOCK);
@@ -354,18 +394,24 @@ function endGame() {
   overlay.classList.remove('hidden');
 }
 
+function resumeGame() {
+  if (!paused || gameOver) return;
+  paused = false;
+  pauseOverlay.classList.add('hidden');
+  lastTime = performance.now();
+  loop(lastTime);
+}
+
 function togglePause() {
   if (gameOver) return;
   paused = !paused;
   if (!paused) {
+    pauseOverlay.classList.add('hidden');
     lastTime = performance.now();
     loop(lastTime);
   } else {
     cancelAnimationFrame(animId);
-    overlayTitle.textContent = 'PAUSA';
-    overlayScore.textContent = '';
-    gameoverContent.classList.add('hidden');
-    overlay.classList.remove('hidden');
+    pauseOverlay.classList.remove('hidden');
   }
 }
 
@@ -387,14 +433,15 @@ function loop(ts) {
 }
 
 function init() {
+  startLevel = parseInt(startLevelSelect.value, 10) || 1;
   board = createBoard();
   score = 0;
   lines = 0;
-  level = 1;
+  level = startLevel;
   paused = false;
   gameOver = false;
   bombPending = false;
-  dropInterval = 1000;
+  dropInterval = Math.max(100, 1000 - (startLevel - 1) * 90);
   dropAccum = 0;
   comboStreak = 0;
   maxCombo = 0;
@@ -403,6 +450,7 @@ function init() {
   spawn();
   updateHUD();
   overlay.classList.add('hidden');
+  pauseOverlay.classList.add('hidden');
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
 }
@@ -410,7 +458,11 @@ function init() {
 // ─── Input ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
-  if (e.code === 'KeyP') { togglePause(); return; }
+  if (e.code === 'KeyP' || e.code === 'Escape') {
+    e.preventDefault();
+    togglePause();
+    return;
+  }
   if (paused || gameOver) return;
   switch (e.code) {
     case 'ArrowLeft':
@@ -435,6 +487,11 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+resumeBtn.addEventListener('click', resumeGame);
+pauseRestartBtn.addEventListener('click', init);
+controlsToggleBtn.addEventListener('click', () => {
+  controlsPanel.classList.toggle('hidden');
+});
 
 saveScoreBtn.addEventListener('click', () => {
   const newIndex = saveRecord(playerNameInput.value);
@@ -455,27 +512,27 @@ resetRecordsBtn.addEventListener('click', () => {
   }
 });
 
-// ─── Theme toggle ────────────────────────────────────────────────────────────
-// Adds or removes the .light-mode class on <body> based on the checkbox state.
-// All colour changes are handled by CSS custom properties in style.css —
-// no colour values are duplicated here. drawGrid() above reads --canvas-grid
-// on every frame so the grid colour updates instantly when the theme changes.
-// The chosen theme is saved to localStorage so it persists across sessions.
+// ─── Skin selector ───────────────────────────────────────────────────────────
 
-const themeCheckbox = document.getElementById('theme-toggle');
-const themeModeText = document.getElementById('theme-mode-text');
-
-function applyTheme(isLight) {
-  document.body.classList.toggle('light-mode', isLight);
-  themeCheckbox.checked = isLight;
-  themeModeText.textContent = isLight ? 'Claro' : 'Oscuro';
-  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+function applySkin(skin) {
+  if (!SKIN_COLORS[skin]) return;
+  activeSkin = skin;
+  activeColors = SKIN_COLORS[skin];
+  document.body.className = document.body.className.replace(/\bskin-\w+\b/g, '').trim();
+  document.body.classList.add('skin-' + skin);
+  document.querySelectorAll('.skin-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.skin === skin);
+  });
+  localStorage.setItem('skin', skin);
+  if (current && !gameOver) draw();
+  if (next) drawNext();
 }
 
-themeCheckbox.addEventListener('change', () => applyTheme(themeCheckbox.checked));
+document.querySelectorAll('.skin-btn').forEach(btn => {
+  btn.addEventListener('click', () => applySkin(btn.dataset.skin));
+});
 
-// Restore last saved preference on page load (defaults to dark)
-applyTheme(localStorage.getItem('theme') === 'light');
+applySkin(localStorage.getItem('skin') || 'retro');
 
 renderPanelLeaderboard();
 init();

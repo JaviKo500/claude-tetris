@@ -40,26 +40,26 @@
           <span class="label">CONTROLS</span>
           <ul>
             <li><kbd>←</kbd><kbd>→</kbd> mover</li>
-            <li><kbd>↑</kbd> rotar</li>
+            <li><kbd>↑</kbd> / <kbd>X</kbd> rotar</li>
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
-            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>P</kbd> / <kbd>Esc</kbd> pausa</li>
           </ul>
         </div>
 
         <div class="panel-section">
-          <span class="label">TEMA</span>
-          <label class="theme-toggle-label" for="theme-toggle">
-            <div class="toggle-switch">
-              <input type="checkbox" id="theme-toggle" />
-              <span class="toggle-slider"></span>
-            </div>
-            <span id="theme-mode-text" class="toggle-mode-text">Oscuro</span>
-          </label>
+          <span class="label">SKIN</span>
+          <div class="skin-selector">
+            <button class="skin-btn active" data-skin="retro">Retro</button>
+            <button class="skin-btn" data-skin="neon">Neon</button>
+            <button class="skin-btn" data-skin="pastel">Pastel</button>
+            <button class="skin-btn" data-skin="pixel">Pixel</button>
+          </div>
         </div>
       </aside>
     </div>
 
+    <!-- Game Over overlay -->
     <div id="overlay" class="overlay hidden">
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
@@ -93,6 +93,45 @@
         </div>
 
         <button id="restart-btn">Reiniciar</button>
+      </div>
+    </div>
+
+    <!-- Pause menu overlay -->
+    <div id="pause-overlay" class="overlay hidden">
+      <div class="overlay-box pause-menu">
+        <p class="pause-title">PAUSA</p>
+
+        <div class="pause-menu-buttons">
+          <button id="resume-btn" class="pause-btn">&#9654; Reanudar</button>
+          <button id="pause-restart-btn" class="pause-btn">&#8635; Reiniciar</button>
+          <button id="controls-toggle-btn" class="pause-btn pause-btn--secondary">&#9000; Ver controles</button>
+
+          <div id="controls-panel" class="controls-panel hidden">
+            <ul>
+              <li><kbd>←</kbd><kbd>→</kbd> mover</li>
+              <li><kbd>↑</kbd> / <kbd>X</kbd> rotar</li>
+              <li><kbd>↓</kbd> bajar suave</li>
+              <li><kbd>Space</kbd> caída dura</li>
+              <li><kbd>P</kbd> / <kbd>Esc</kbd> pausa</li>
+            </ul>
+          </div>
+
+          <div class="level-selector">
+            <label for="start-level-select">Nivel inicial</label>
+            <select id="start-level-select">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   </div>
