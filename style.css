@@ -44,6 +44,9 @@
   --btn-text:     #0f0f17;
   --btn-bg-hover: #9bbdff;
 
+  /* Transparent accent tint used for secondary button hover */
+  --color-accent-tint: rgba(122, 162, 247, 0.12);
+
   /* Theme-toggle switch track and thumb */
   --toggle-track: #3a3a5a;
   --toggle-thumb: #e0e0e0;
@@ -78,6 +81,8 @@ body.light-mode {
   --btn-bg:       #2563eb;
   --btn-text:     #ffffff;
   --btn-bg-hover: #1d4ed8;
+
+  --color-accent-tint: rgba(37, 99, 235, 0.12);
 
   --toggle-track: #c7d0e8;
   --toggle-thumb: #ffffff;
@@ -315,4 +320,110 @@ kbd {
 
 #restart-btn:hover {
   background: var(--btn-bg-hover);
+}
+
+/* ---- Menú de pausa ---- */
+.pause-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--color-accent);
+  text-align: center;
+}
+
+.pause-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  min-width: 200px;
+}
+
+.menu-btn {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.15s;
+  width: 100%;
+}
+
+.menu-btn:hover {
+  background: var(--btn-bg-hover);
+}
+
+.menu-btn-secondary {
+  background: transparent;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+}
+
+.menu-btn-secondary:hover {
+  background: var(--color-accent-tint);
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--canvas-border);
+  margin: 2px 0;
+}
+
+.start-level-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.menu-label {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--text-label);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.menu-select {
+  background: var(--canvas-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--canvas-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s, border-color 0.25s, color 0.25s;
+}
+
+.menu-select:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.pause-controls {
+  background: var(--canvas-bg);
+  border: 1px solid var(--canvas-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  transition: background 0.25s, border-color 0.25s;
+}
+
+.pause-controls ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pause-controls li {
+  font-size: 12px;
+  color: var(--text-controls);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }

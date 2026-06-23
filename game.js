@@ -45,8 +45,31 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
+const gameoverBox = document.getElementById('gameover-box');
+const pauseBox = document.getElementById('pause-box');
+const resumeBtn = document.getElementById('resume-btn');
+const restartPauseBtn = document.getElementById('restart-pause-btn');
+const toggleControlsBtn = document.getElementById('toggle-controls-btn');
+const pauseControlsPanel = document.getElementById('pause-controls');
+const startLevelSelect = document.getElementById('start-level-select');
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending;
+let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending, baseLevel;
+
+let startLevel = parseInt(localStorage.getItem('tetris-start-level'), 10) || 1;
+
+// Populate the level selector (1–15)
+for (let i = 1; i <= 15; i++) {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = i;
+  if (i === startLevel) opt.selected = true;
+  startLevelSelect.appendChild(opt);
+}
+
+startLevelSelect.addEventListener('change', () => {
+  startLevel = parseInt(startLevelSelect.value, 10);
+  localStorage.setItem('tetris-start-level', startLevel);
+});
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -121,7 +144,7 @@ function clearLines() {
     const prevLines = lines;
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
-    level = Math.floor(lines / 10) + 1;
+    level = Math.floor(lines / 10) + baseLevel;
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
     if (Math.floor(prevLines / BOMB_LINES_INTERVAL) !== Math.floor(lines / BOMB_LINES_INTERVAL)) {
       bombPending = true;
@@ -246,25 +269,41 @@ function drawNext() {
       drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB);
 }
 
+function showOverlay(state) {
+  overlay.dataset.state = state;
+  if (state === 'pause') {
+    gameoverBox.classList.add('hidden');
+    pauseBox.classList.remove('hidden');
+  } else {
+    pauseBox.classList.add('hidden');
+    gameoverBox.classList.remove('hidden');
+  }
+  overlay.classList.remove('hidden');
+}
+
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
   overlayTitle.textContent = 'GAME OVER';
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
-  overlay.classList.remove('hidden');
+  showOverlay('gameover');
+}
+
+function resumeGame() {
+  if (!paused || gameOver) return;
+  togglePause();
 }
 
 function togglePause() {
   if (gameOver) return;
   paused = !paused;
   if (!paused) {
+    overlay.classList.add('hidden');
     lastTime = performance.now();
     loop(lastTime);
   } else {
     cancelAnimationFrame(animId);
-    overlayTitle.textContent = 'PAUSA';
-    overlayScore.textContent = '';
-    overlay.classList.remove('hidden');
+    showOverlay('pause');
   }
 }
 
@@ -289,11 +328,12 @@ function init() {
   board = createBoard();
   score = 0;
   lines = 0;
-  level = 1;
+  baseLevel = startLevel;
+  level = baseLevel;
   paused = false;
   gameOver = false;
   bombPending = false;
-  dropInterval = 1000;
+  dropInterval = Math.max(100, 1000 - (startLevel - 1) * 90);
   dropAccum = 0;
   lastTime = performance.now();
   next = randomPiece();
@@ -305,7 +345,11 @@ function init() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.code === 'KeyP') { togglePause(); return; }
+  if (e.code === 'KeyP' || e.code === 'Escape') {
+    if (gameOver) return;
+    togglePause();
+    return;
+  }
   if (paused || gameOver) return;
   switch (e.code) {
     case 'ArrowLeft':
@@ -330,6 +374,13 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+resumeBtn.addEventListener('click', resumeGame);
+restartPauseBtn.addEventListener('click', init);
+
+toggleControlsBtn.addEventListener('click', () => {
+  const hidden = pauseControlsPanel.classList.toggle('hidden');
+  toggleControlsBtn.textContent = hidden ? 'Ver controles' : 'Ocultar controles';
+});
 
 // ─── Theme toggle ────────────────────────────────────────────────────────────
 // Adds or removes the .light-mode class on <body> based on the checkbox state.
