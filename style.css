@@ -316,3 +316,124 @@ kbd {
 #restart-btn:hover {
   background: var(--btn-bg-hover);
 }
+
+/* ─── Selector de skin ──────────────────────────────────────────────────────── */
+.skin-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.skin-btn {
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 4px;
+  color: var(--kbd-color);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 6px 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.skin-btn:hover {
+  background: var(--canvas-border);
+  color: var(--text-primary);
+}
+
+.skin-btn.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--btn-text);
+}
+
+/* ─── Skin: Neon ────────────────────────────────────────────────────────────── */
+body.skin-neon {
+  --bg-page:        #000000;
+  --text-primary:   #00f5ff;
+
+  --color-accent:       #00f5ff;
+  --color-accent-hover: #40ffff;
+
+  --text-label:    #008899;
+  --text-controls: #006677;
+
+  --canvas-bg:     #000000;
+  --canvas-border: rgba(0, 245, 255, 0.25);
+  --canvas-grid:   #060606;
+
+  --kbd-bg:     #001a1a;
+  --kbd-border: rgba(0, 245, 255, 0.25);
+  --kbd-color:  #00c8d8;
+
+  --overlay-bg:    rgba(0, 0, 0, 0.88);
+  --overlay-title: #e040fb;
+
+  --btn-bg:       #00f5ff;
+  --btn-text:     #000000;
+  --btn-bg-hover: #40ffff;
+
+  --toggle-track: #003344;
+  --toggle-thumb: #00f5ff;
+}
+
+/* ─── Skin: Pastel ──────────────────────────────────────────────────────────── */
+body.skin-pastel {
+  --bg-page:        #f5eeff;
+  --text-primary:   #4a3560;
+
+  --color-accent:       #b07fd6;
+  --color-accent-hover: #9b6bc9;
+
+  --text-label:    #9b7cbf;
+  --text-controls: #b09ac8;
+
+  --canvas-bg:     #fdf6ff;
+  --canvas-border: #dac8e8;
+  --canvas-grid:   #ede4f0;
+
+  --kbd-bg:     #efe4ff;
+  --kbd-border: #dac8e8;
+  --kbd-color:  #7a5aa0;
+
+  --overlay-bg:    rgba(245, 238, 255, 0.88);
+  --overlay-title: #c77dff;
+
+  --btn-bg:       #b07fd6;
+  --btn-text:     #ffffff;
+  --btn-bg-hover: #9b6bc9;
+
+  --toggle-track: #dac8e8;
+  --toggle-thumb: #b07fd6;
+}
+
+/* ─── Skin: Pixel Art ───────────────────────────────────────────────────────── */
+body.skin-pixel {
+  --bg-page:        #111111;
+  --text-primary:   #f8f800;
+
+  --color-accent:       #f8f800;
+  --color-accent-hover: #ffff40;
+
+  --text-label:    #888800;
+  --text-controls: #666600;
+
+  --canvas-bg:     #0d0d0d;
+  --canvas-border: #333333;
+  --canvas-grid:   #1a1a1a;
+
+  --kbd-bg:     #1a1a00;
+  --kbd-border: #555500;
+  --kbd-color:  #f8f800;
+
+  --overlay-bg:    rgba(0, 0, 0, 0.88);
+  --overlay-title: #ff4444;
+
+  --btn-bg:       #f8f800;
+  --btn-text:     #000000;
+  --btn-bg-hover: #ffff40;
+
+  --toggle-track: #444400;
+  --toggle-thumb: #f8f800;
+}
