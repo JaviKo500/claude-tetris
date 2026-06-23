@@ -111,8 +111,21 @@ const overlayRecords = document.getElementById('overlay-records');
 const overlayRecordsBody = document.getElementById('overlay-records-body');
 const mainRecordsBody = document.getElementById('main-records-body');
 const resetRecordsBtn = document.getElementById('reset-records-btn');
+const pauseOverlay = document.getElementById('overlay-pause');
+const pauseResumeBtn = document.getElementById('pause-resume-btn');
+const pauseRestartBtn = document.getElementById('pause-restart-btn');
+const pauseControlsBtn = document.getElementById('pause-controls-btn');
+const pauseControlsList = document.getElementById('pause-controls-list');
+const startLevelSelect = document.getElementById('start-level-select');
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending;
+for (let i = 1; i <= 15; i++) {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = i;
+  startLevelSelect.appendChild(opt);
+}
+
+let board, current, next, score, lines, level, baseLevel, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending;
 let currentSkin = SKINS.retro;
 let combo, maxCombo;
 
@@ -189,7 +202,7 @@ function clearLines() {
     const prevLines = lines;
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
-    level = Math.floor(lines / 10) + 1;
+    level = baseLevel + Math.floor(lines / 10);
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
     if (Math.floor(prevLines / BOMB_LINES_INTERVAL) !== Math.floor(lines / BOMB_LINES_INTERVAL)) {
       bombPending = true;
@@ -392,12 +405,11 @@ function togglePause() {
   paused = !paused;
   if (!paused) {
     lastTime = performance.now();
+    pauseOverlay.classList.add('hidden');
     loop(lastTime);
   } else {
     cancelAnimationFrame(animId);
-    overlayTitle.textContent = 'PAUSA';
-    overlayScore.textContent = '';
-    overlay.classList.remove('hidden');
+    pauseOverlay.classList.remove('hidden');
   }
 }
 
@@ -419,16 +431,18 @@ function loop(ts) {
 }
 
 function init() {
+  const startLvl = parseInt(startLevelSelect.value, 10) || 1;
   board = createBoard();
   score = 0;
   lines = 0;
-  level = 1;
+  baseLevel = startLvl;
+  level = startLvl;
   combo = 0;
   maxCombo = 0;
   paused = false;
   gameOver = false;
   bombPending = false;
-  dropInterval = 1000;
+  dropInterval = Math.max(100, 1000 - (startLvl - 1) * 90);
   dropAccum = 0;
   lastTime = performance.now();
   next = randomPiece();
@@ -437,6 +451,9 @@ function init() {
   nameSection.classList.add('hidden');
   overlayRecords.classList.add('hidden');
   overlay.classList.add('hidden');
+  pauseOverlay.classList.add('hidden');
+  pauseControlsList.classList.add('hidden');
+  pauseControlsBtn.textContent = 'Ver controles';
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
 }
@@ -462,7 +479,7 @@ resetRecordsBtn.addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', e => {
-  if (e.code === 'KeyP') { togglePause(); return; }
+  if (e.code === 'KeyP' || e.code === 'Escape') { togglePause(); return; }
   if (paused || gameOver) return;
   switch (e.code) {
     case 'ArrowLeft':
@@ -487,6 +504,12 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+pauseResumeBtn.addEventListener('click', togglePause);
+pauseRestartBtn.addEventListener('click', init);
+pauseControlsBtn.addEventListener('click', () => {
+  const nowHidden = pauseControlsList.classList.toggle('hidden');
+  pauseControlsBtn.textContent = nowHidden ? 'Ver controles' : 'Ocultar controles';
+});
 
 // ─── Skin selector ───────────────────────────────────────────────────────────
 
