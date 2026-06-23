@@ -5,6 +5,17 @@
   padding: 0;
 }
 
+/* ─── Extra theme variables ─────────────────────────────────────────────────── */
+:root {
+  --record-highlight-bg: rgba(122, 162, 247, 0.18);
+  --record-highlight-color: #7aa2f7;
+  --btn-secondary-bg: transparent;
+  --btn-secondary-border: #555570;
+  --btn-secondary-color: #888;
+  --btn-secondary-hover-bg: rgba(255,255,255,0.06);
+  --combo-color: #ffd54f;
+}
+
 /* ─── Theme variables (dark mode — default) ────────────────────────────────── */
 /*
  * All colour values live here as CSS custom properties.
@@ -81,6 +92,12 @@ body.light-mode {
 
   --toggle-track: #c7d0e8;
   --toggle-thumb: #ffffff;
+
+  --record-highlight-bg: rgba(37, 99, 235, 0.12);
+  --record-highlight-color: #2563eb;
+  --btn-secondary-border: #c7d0e8;
+  --btn-secondary-color: #6b7280;
+  --btn-secondary-hover-bg: rgba(0,0,0,0.04);
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────────── */
@@ -278,6 +295,11 @@ kbd {
   display: none;
 }
 
+/* ─── Overlay — full coverage, incluye pantalla de inicio ───────────────────── */
+.overlay {
+  overflow-y: auto;
+}
+
 .overlay-box {
   text-align: center;
   display: flex;
@@ -299,8 +321,8 @@ kbd {
   color: var(--color-accent);
 }
 
-#restart-btn {
-  margin-top: 8px;
+.btn {
+  margin-top: 4px;
   background: var(--btn-bg);
   color: var(--btn-text);
   border: none;
@@ -313,6 +335,91 @@ kbd {
   transition: background 0.15s;
 }
 
-#restart-btn:hover {
+.btn:hover {
   background: var(--btn-bg-hover);
+}
+
+.btn-secondary {
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-color);
+  border: 1px solid var(--btn-secondary-border);
+  font-size: 12px;
+  padding: 6px 18px;
+  font-weight: 600;
+}
+
+.btn-secondary:hover {
+  background: var(--btn-secondary-hover-bg);
+}
+
+/* Alias for legacy id selector used in JS */
+#restart-btn {
+  margin-top: 8px;
+}
+
+/* ─── Records table ─────────────────────────────────────────────────────────── */
+.records-title {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-label);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.records-table {
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'Courier New', Courier, monospace;
+  min-width: 260px;
+}
+
+.records-table th {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-label);
+  font-weight: 600;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--canvas-border);
+}
+
+.records-table td {
+  padding: 5px 8px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--canvas-border);
+}
+
+.records-table tr.record-new td {
+  background: var(--record-highlight-bg);
+  color: var(--record-highlight-color);
+  font-weight: 700;
+}
+
+/* ─── Name input ─────────────────────────────────────────────────────────────── */
+#name-input-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.name-input {
+  background: var(--canvas-bg);
+  border: 1px solid var(--canvas-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  padding: 8px 14px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 200px;
+}
+
+.name-input:focus {
+  border-color: var(--color-accent);
+}
+
+/* ─── Combo value ────────────────────────────────────────────────────────────── */
+.combo-value {
+  color: var(--combo-color);
 }
