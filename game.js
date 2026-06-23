@@ -4,7 +4,7 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
+const COLORS_RETRO = [
   null,
   '#4dd0e1', // I - cyan
   '#ffd54f', // O - yellow
@@ -15,6 +15,45 @@ const COLORS = [
   '#ffb74d', // L - orange
   '#cfd8dc', // Nut - plata claro (tuerca, reto)
   '#ef5350', // Bomb - rojo (bomba, destruye 3×3)
+];
+
+const COLORS_NEON = [
+  null,
+  '#00fff7', // I - cian eléctrico
+  '#ffe600', // O - amarillo néon
+  '#ff00e6', // T - magenta
+  '#00ff41', // S - verde néon
+  '#ff1744', // Z - rojo néon
+  '#2979ff', // J - azul néon
+  '#ff6d00', // L - naranja néon
+  '#ffffff', // Nut - blanco
+  '#ff1744', // Bomb - rojo brillante
+];
+
+const COLORS_PASTEL = [
+  null,
+  '#a8e6f0', // I - celeste pastel
+  '#fff0a0', // O - amarillo pastel
+  '#d4a8e8', // T - lila pastel
+  '#b8e8b8', // S - verde pastel
+  '#f5b8b8', // Z - rosa pastel
+  '#a8b8f0', // J - azul pastel
+  '#ffd4a8', // L - melocotón pastel
+  '#e8ecf0', // Nut - gris muy claro
+  '#f0a8a8', // Bomb - rojo pastel
+];
+
+const COLORS_PIXEL = [
+  null,
+  '#00aacc', // I
+  '#ccaa00', // O
+  '#882299', // T
+  '#228844', // S
+  '#aa2200', // Z
+  '#224488', // J
+  '#aa6600', // L
+  '#889999', // Nut
+  '#cc2200', // Bomb
 ];
 
 const PIECES = [
@@ -47,6 +86,16 @@ const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending;
+let activeSkin = 'retro';
+
+function getColors() {
+  switch (activeSkin) {
+    case 'neon':   return COLORS_NEON;
+    case 'pastel': return COLORS_PASTEL;
+    case 'pixel':  return COLORS_PIXEL;
+    default:       return COLORS_RETRO;
+  }
+}
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -186,13 +235,60 @@ function updateHUD() {
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const color = getColors()[colorIndex];
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+
+  const bx = x * size + 1;
+  const by = y * size + 1;
+  const bw = size - 2;
+  const bh = size - 2;
+
+  if (activeSkin === 'neon') {
+    const isGhost = (alpha ?? 1) < 1;
+    if (!isGhost) {
+      context.shadowBlur = 12;
+      context.shadowColor = color;
+    }
+    context.fillStyle = color;
+    context.fillRect(bx, by, bw, bh);
+    context.shadowBlur = 0;
+    context.shadowColor = 'transparent';
+  } else if (activeSkin === 'pastel') {
+    context.fillStyle = color;
+    if (context.roundRect) {
+      context.beginPath();
+      context.roundRect(bx, by, bw, bh, 5);
+      context.fill();
+    } else {
+      context.fillRect(bx, by, bw, bh);
+    }
+    context.fillStyle = 'rgba(255,255,255,0.25)';
+    if (context.roundRect) {
+      context.beginPath();
+      context.roundRect(bx, by, bw, 4, [2, 2, 0, 0]);
+      context.fill();
+    } else {
+      context.fillRect(bx, by, bw, 4);
+    }
+  } else if (activeSkin === 'pixel') {
+    context.fillStyle = color;
+    context.fillRect(bx, by, bw, bh);
+    context.fillStyle = 'rgba(0,0,0,0.3)';
+    for (let px = bx; px < bx + bw; px += 6) {
+      context.fillRect(px, by, 1, bh);
+    }
+    for (let py = by; py < by + bh; py += 6) {
+      context.fillRect(bx, py, bw, 1);
+    }
+    context.fillStyle = 'rgba(255,255,255,0.10)';
+    context.fillRect(bx, by, bw, 2);
+  } else {
+    context.fillStyle = color;
+    context.fillRect(bx, by, bw, bh);
+    context.fillStyle = 'rgba(255,255,255,0.12)';
+    context.fillRect(bx, by, bw, 4);
+  }
+
   context.globalAlpha = 1;
 }
 
@@ -214,7 +310,12 @@ function drawGrid() {
 }
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (activeSkin === 'neon') {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
   drawGrid();
 
   // board
@@ -330,6 +431,20 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+// ─── Skin selector ───────────────────────────────────────────────────────────
+
+const skinSelect = document.getElementById('skin-select');
+
+function applySkin(skinName) {
+  activeSkin = skinName;
+  localStorage.setItem('tetris-skin', skinName);
+  if (skinSelect.value !== skinName) skinSelect.value = skinName;
+}
+
+skinSelect.addEventListener('change', () => applySkin(skinSelect.value));
+
+applySkin(localStorage.getItem('tetris-skin') || 'retro');
 
 // ─── Theme toggle ────────────────────────────────────────────────────────────
 // Adds or removes the .light-mode class on <body> based on the checkbox state.
