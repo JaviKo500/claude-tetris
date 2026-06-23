@@ -262,7 +262,7 @@ kbd {
   transition: color 0.25s;
 }
 
-/* ---- Overlay ---- */
+/* ---- Overlay (shared) ---- */
 .overlay {
   position: absolute;
   inset: 0;
@@ -286,6 +286,7 @@ kbd {
   align-items: center;
 }
 
+/* ---- Game Over overlay ---- */
 #overlay-title {
   font-size: 28px;
   font-weight: 800;
@@ -315,4 +316,106 @@ kbd {
 
 #restart-btn:hover {
   background: var(--btn-bg-hover);
+}
+
+/* ---- Pause menu overlay ---- */
+.pause-menu {
+  min-width: 220px;
+  gap: 16px;
+}
+
+.pause-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--color-accent);
+}
+
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.menu-btn {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--canvas-border);
+  border-radius: 6px;
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  width: 100%;
+}
+
+.menu-btn:hover {
+  background: var(--canvas-bg);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.menu-btn--primary {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border-color: var(--btn-bg);
+}
+
+.menu-btn--primary:hover {
+  background: var(--btn-bg-hover);
+  border-color: var(--btn-bg-hover);
+  color: var(--btn-text);
+}
+
+.pause-controls {
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--canvas-border);
+}
+
+.pause-controls.hidden {
+  display: none;
+}
+
+.pause-controls ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.pause-controls li {
+  font-size: 12px;
+  color: var(--text-controls);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pause-level {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--canvas-border);
+  width: 100%;
+}
+
+.pause-level select {
+  background: var(--canvas-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--canvas-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.pause-level select:hover {
+  border-color: var(--color-accent);
 }
