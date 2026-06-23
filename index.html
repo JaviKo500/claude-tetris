@@ -25,6 +25,10 @@
           <span class="label">LEVEL</span>
           <span class="value" id="level">1</span>
         </div>
+        <div class="panel-section" id="combo-section" style="display:none">
+          <span class="label">COMBO</span>
+          <span class="value combo-value" id="combo">0</span>
+        </div>
 
         <div class="panel-section">
           <span class="label">NEXT</span>
@@ -55,11 +59,31 @@
       </aside>
     </div>
 
-    <div id="overlay" class="overlay hidden">
+    <div id="overlay" class="overlay">
       <div class="overlay-box">
-        <p id="overlay-title">GAME OVER</p>
+        <p id="overlay-title">TETRIS</p>
         <p id="overlay-score"></p>
-        <button id="restart-btn">Reiniciar</button>
+        <div id="name-input-section" style="display:none">
+          <input type="text" id="player-name" class="name-input" maxlength="20" placeholder="Tu nombre" />
+          <button id="save-record-btn" class="btn">Guardar</button>
+        </div>
+        <div id="records-section" style="display:none">
+          <p class="records-title">RÉCORDS</p>
+          <table id="records-table" class="records-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Puntos</th>
+                <th>Combo</th>
+                <th>Líneas</th>
+              </tr>
+            </thead>
+            <tbody id="records-tbody"></tbody>
+          </table>
+          <button id="reset-records-btn" class="btn btn-secondary">Resetear récords</button>
+        </div>
+        <button id="restart-btn" class="btn">Reiniciar</button>
       </div>
     </div>
   </div>
