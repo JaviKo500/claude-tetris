@@ -4,18 +4,74 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
-  null,
-  '#4dd0e1', // I - cyan
-  '#ffd54f', // O - yellow
-  '#ba68c8', // T - purple
-  '#81c784', // S - green
-  '#e57373', // Z - red
-  '#5B8DD9', // J - pale blue
-  '#ffb74d', // L - orange
-  '#cfd8dc', // Nut - plata claro (tuerca, reto)
-  '#ef5350', // Bomb - rojo (bomba, destruye 3×3)
-];
+const SKINS = {
+  retro: {
+    colors: [null, '#4dd0e1', '#ffd54f', '#ba68c8', '#81c784', '#e57373', '#5B8DD9', '#ffb74d', '#cfd8dc', '#ef5350'],
+    draw(ctx, x, y, ci, sz, alpha) {
+      if (!ci) return;
+      ctx.globalAlpha = alpha ?? 1;
+      ctx.fillStyle = this.colors[ci];
+      ctx.fillRect(x * sz + 1, y * sz + 1, sz - 2, sz - 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillRect(x * sz + 1, y * sz + 1, sz - 2, 4);
+      ctx.globalAlpha = 1;
+    },
+  },
+  neon: {
+    colors: [null, '#00f5ff', '#ffea00', '#e040fb', '#69ff47', '#ff1744', '#2979ff', '#ff9100', '#e0e0e0', '#ff1744'],
+    draw(ctx, x, y, ci, sz, alpha) {
+      if (!ci) return;
+      const color = this.colors[ci];
+      ctx.globalAlpha = alpha ?? 1;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = color;
+      ctx.fillRect(x * sz + 1, y * sz + 1, sz - 2, sz - 2);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      ctx.fillRect(x * sz + 2, y * sz + 2, sz - 4, 5);
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    },
+  },
+  pastel: {
+    colors: [null, '#a8d8ea', '#fff9ae', '#dab8f3', '#b5ead7', '#ffb3ba', '#b3d9ff', '#ffd0a0', '#e8e8e8', '#ffb3ba'],
+    draw(ctx, x, y, ci, sz, alpha) {
+      if (!ci) return;
+      const color = this.colors[ci];
+      ctx.globalAlpha = alpha ?? 1;
+      const m = 2;
+      ctx.fillStyle = color;
+      ctx.fillRect(x * sz + m, y * sz + m, sz - m * 2, sz - m * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.fillRect(x * sz + m, y * sz + m, sz - m * 2, 5);
+      ctx.fillRect(x * sz + m, y * sz + m, 5, sz - m * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.07)';
+      ctx.fillRect(x * sz + m, y * sz + sz - m - 4, sz - m * 2, 4);
+      ctx.fillRect(x * sz + sz - m - 4, y * sz + m, 4, sz - m * 2);
+      ctx.globalAlpha = 1;
+    },
+  },
+  pixel: {
+    colors: [null, '#0099cc', '#ffcc00', '#9933cc', '#33aa33', '#cc2200', '#2266ff', '#ff7700', '#aabbcc', '#cc2200'],
+    draw(ctx, x, y, ci, sz, alpha) {
+      if (!ci) return;
+      const color = this.colors[ci];
+      ctx.globalAlpha = alpha ?? 1;
+      const bx = x * sz, by = y * sz;
+      ctx.fillStyle = color;
+      ctx.fillRect(bx + 1, by + 1, sz - 2, sz - 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(bx + 1, by + 1, sz - 2, 2);
+      ctx.fillRect(bx + 1, by + 1, 2, sz - 2);
+      ctx.fillRect(bx + 1, by + sz - 3, sz - 2, 2);
+      ctx.fillRect(bx + sz - 3, by + 1, 2, sz - 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillRect(bx + 3, by + 3, 5, 5);
+      ctx.globalAlpha = 1;
+    },
+  },
+};
 
 const PIECES = [
   null,
@@ -47,6 +103,7 @@ const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, bombPending;
+let currentSkin = SKINS.retro;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -185,18 +242,11 @@ function updateHUD() {
 }
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
-  if (!colorIndex) return;
-  const color = COLORS[colorIndex];
-  context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
-  context.globalAlpha = 1;
+  currentSkin.draw(context, x, y, colorIndex, size, alpha);
 }
 
 function drawGrid() {
+  ctx.shadowBlur = 0;
   ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--canvas-grid').trim();
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
@@ -331,6 +381,24 @@ document.addEventListener('keydown', e => {
 
 restartBtn.addEventListener('click', init);
 
+// ─── Skin selector ───────────────────────────────────────────────────────────
+
+function applySkin(key) {
+  currentSkin = SKINS[key] || SKINS.retro;
+  document.body.classList.remove('skin-neon', 'skin-pastel', 'skin-pixel');
+  if (key !== 'retro') document.body.classList.add(`skin-${key}`);
+  localStorage.setItem('skin', key);
+  document.querySelectorAll('.skin-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.skin === key);
+  });
+  if ((paused || gameOver) && current) { draw(); drawNext(); }
+}
+
+document.getElementById('skin-picker').addEventListener('click', e => {
+  const btn = e.target.closest('.skin-btn');
+  if (btn) applySkin(btn.dataset.skin);
+});
+
 // ─── Theme toggle ────────────────────────────────────────────────────────────
 // Adds or removes the .light-mode class on <body> based on the checkbox state.
 // All colour changes are handled by CSS custom properties in style.css —
@@ -352,5 +420,6 @@ themeCheckbox.addEventListener('change', () => applyTheme(themeCheckbox.checked)
 
 // Restore last saved preference on page load (defaults to dark)
 applyTheme(localStorage.getItem('theme') === 'light');
+applySkin(localStorage.getItem('skin') || 'retro');
 
 init();
